@@ -1,15 +1,17 @@
-from main import greeting
-from prefect.deployments import Deployment
-from prefect.server.schemas.schedules import CronSchedule
+from workflow import data_preprocessing
+from pathlib import Path
 
-
-greeting_deployment = Deployment.build_from_flow(
-        flow = greeting,
-        name = 'basic_greeting',
-        work_queue_name = 'GreetingWorkQueue',
-        parameters = dict(name='Navin'),
-        schedule=(CronSchedule(cron="0 8 * * *", timezone="Asia/Phnom_Penh"))
-        )
 
 if __name__ == '__main__':
-        greeting_deployment.apply()
+        data_preprocessing.from_source(
+                source=str(Path(__file__).parent),
+                entrypoint="workflow.py:data_preprocessing",
+                ).deploy(
+                        name="data-preprocessing-customer-churn",
+                        work_pool_name="DataPreprocessingWorkPool",
+                        cron="0 9 * * 1-5" ,
+                        parameters={
+                                "filename": "Churn_Modelling.csv",
+                                "to_fill_age_missing": "mean",
+                                "test_size": 0.33
+        })
